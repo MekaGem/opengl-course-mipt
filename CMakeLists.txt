@@ -12,11 +12,11 @@ pkg_search_module(GLFW REQUIRED glfw3)
 include_directories(${GLFW_INCLUDE_DIRS})
 target_link_libraries(opengl ${GLFW_STATIC_LIBRARIES})
 
-find_library(GLEW NAMES libGLEW.a GLEW)
+find_library(GLEW NAMES libGLEW.a)
 target_link_libraries(opengl ${GLEW})
 message("${GLEW}")
 
-find_library(SOIL NAMES libSOIL.a SOIL)
+find_library(SOIL NAMES libSOIL.a)
 target_link_libraries(opengl ${SOIL})
 message("${SOIL}")
 

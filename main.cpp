@@ -49,7 +49,7 @@ int main() {
     const char *c_str;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    std::ifstream vertexShaderIStream("vertex.vert");
+    std::ifstream vertexShaderIStream("shader.vert");
     std::string vertexShaderContent(
             (std::istreambuf_iterator<char>(vertexShaderIStream)),
             (std::istreambuf_iterator<char>())
@@ -66,7 +66,7 @@ int main() {
     }
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::ifstream fragmentShaderIStream("fragment.frag");
+    std::ifstream fragmentShaderIStream("shader.frag");
     std::string fragmentShaderContent(
             (std::istreambuf_iterator<char>(fragmentShaderIStream)),
             (std::istreambuf_iterator<char>())
