@@ -49,7 +49,7 @@ int main() {
     const char *c_str;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    std::ifstream vertexShaderIStream("vertex.shader");
+    std::ifstream vertexShaderIStream("vertex.vert");
     std::string vertexShaderContent(
             (std::istreambuf_iterator<char>(vertexShaderIStream)),
             (std::istreambuf_iterator<char>())
@@ -66,7 +66,7 @@ int main() {
     }
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::ifstream fragmentShaderIStream("fragment.shader");
+    std::ifstream fragmentShaderIStream("fragment.frag");
     std::string fragmentShaderContent(
             (std::istreambuf_iterator<char>(fragmentShaderIStream)),
             (std::istreambuf_iterator<char>())
@@ -95,9 +95,10 @@ int main() {
     glDeleteShader(fragmentShader);
 
     GLfloat vertices[] = {
-            0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // Top Right
-            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom Right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom Left
+            // Position         // Color          //Texture coordinates
+            0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f, 1.0f, // Top
+            0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // Bottom Right
+            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // Bottom Left
     };
     GLuint indices[] = {
             0, 1, 2
@@ -115,48 +116,66 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
 
-    glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
+    glBindVertexArray(0);
 
     int width, height;
-    unsigned char* image = SOIL_load_image("wall.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
     std::cout << width << " : " << height << std::endl;
 
-    // Uncommenting this call will result in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    std::cout << int(image[1]) << std::endl;
 
-    // Game loop
+    GLuint texture;
+    glGenTextures(1, &texture);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(texture);
+
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        GLfloat timeValue = (GLfloat) glfwGetTime();
-        GLfloat greenValue = (GLfloat) ((sin(timeValue) / 2) + 0.5);
-        GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+//        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+//        GLfloat timeValue = (GLfloat) glfwGetTime();
+//        GLfloat greenValue = (GLfloat) ((sin(timeValue) / 2) + 0.5);
+//        GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourTexture");
+//        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
         glUseProgram(shaderProgram);
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // Swap the screen buffers
         glfwSwapBuffers(window);
     }
-    // Properly de-allocate all resources once they've outlived their purpose
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-    // Terminate GLFW, clearing any resources allocated by GLFW.
+
     glfwTerminate();
     return 0;
 }
