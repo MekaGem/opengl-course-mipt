@@ -1,12 +1,20 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <random>
 
 //#define GLEW_STATIC
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <SOIL/SOIL.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "shader.hpp"
+#include "texture.hpp"
 
 void errorCallback(int error, const char* description);
 
@@ -42,84 +50,17 @@ int main() {
         return -1;
     }
 
-    glViewport(0, 0, WIDTH, HEIGHT);
+//    glViewport(0, 0, WIDTH * 2, HEIGHT * 2);
 
-    GLint success;
-    GLchar infoLog[512];
-    const char *c_str;
+    Shader shader("shaders/shader.vert", "shaders/shader.frag");
 
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    std::ifstream vertexShaderIStream("shader.vert");
-    std::string vertexShaderContent(
-            (std::istreambuf_iterator<char>(vertexShaderIStream)),
-            (std::istreambuf_iterator<char>())
-    );
-    c_str = vertexShaderContent.c_str();
-    glShaderSource(vertexShader, 1, &c_str, NULL);
-    glCompileShader(vertexShader);
-
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::ifstream fragmentShaderIStream("shader.frag");
-    std::string fragmentShaderContent(
-            (std::istreambuf_iterator<char>(fragmentShaderIStream)),
-            (std::istreambuf_iterator<char>())
-    );
-    c_str = fragmentShaderContent.c_str();
-    glShaderSource(fragmentShader, 1, &c_str, NULL);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    int width, height;
-    unsigned char* image = SOIL_load_image("linux.png", &width, &height, 0, SOIL_LOAD_RGBA);
-    std::cout << width << " : " << height << std::endl;
-
-    std::cout << int(image[1]) << std::endl;
-
-    GLuint texture;
-    glGenTextures(1, &texture);
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(texture);
-
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    Texture texture("assets/container.jpg");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GLfloat w = GLfloat(width) / height / 2;
+    GLfloat w = GLfloat(texture.getWidth()) / texture.getHeight() / 2;
     GLfloat h = 0.5;
 
     GLfloat vertices[] = {
@@ -164,18 +105,18 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, texture.get());
 
-        glUseProgram(shaderProgram);
+        shader.use();
 
         GLfloat timeValue = (GLfloat) glfwGetTime();
 
         GLfloat xValue = (GLfloat) (sin(timeValue) / 4) + 0.25f;
-        GLint xValueLocation = glGetUniformLocation(shaderProgram, "xValue");
+        GLint xValueLocation = glGetUniformLocation(shader.get(), "xValue");
         glUniform1f(xValueLocation, xValue);
 
         GLfloat yValue = (GLfloat) (cos(timeValue + 0.2) / 4) + 0.25f;
-        GLint yValueLocation = glGetUniformLocation(shaderProgram, "yValue");
+        GLint yValueLocation = glGetUniformLocation(shader.get(), "yValue");
         glUniform1f(yValueLocation, yValue);
 
         glBindVertexArray(VAO);
