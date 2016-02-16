@@ -94,14 +94,44 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    int width, height;
+    unsigned char* image = SOIL_load_image("linux.png", &width, &height, 0, SOIL_LOAD_RGBA);
+    std::cout << width << " : " << height << std::endl;
+
+    std::cout << int(image[1]) << std::endl;
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(texture);
+
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    GLfloat w = GLfloat(width) / height / 2;
+    GLfloat h = 0.5;
+
     GLfloat vertices[] = {
-            // Position         // Color          //Texture coordinates
-            0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f, 1.0f, // Top
-            0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f, // Bottom Right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // Bottom Left
+            // Position    // Color           //Texture coordinates
+            -w, -h, 0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, // Bottom Left
+            -w,  h, 0.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f, // Top Left
+             w,  h, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f, // Top Right
+             w, -h, 0.0f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f, // Bottom Right
     };
     GLuint indices[] = {
-            0, 1, 2
+            0, 1, 2,
+            2, 3, 0
     };
     GLuint VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -127,46 +157,29 @@ int main() {
 
     glBindVertexArray(0);
 
-    int width, height;
-    unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-    std::cout << width << " : " << height << std::endl;
-
-    std::cout << int(image[1]) << std::endl;
-
-    GLuint texture;
-    glGenTextures(1, &texture);
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(texture);
-
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
-//        GLfloat timeValue = (GLfloat) glfwGetTime();
-//        GLfloat greenValue = (GLfloat) ((sin(timeValue) / 2) + 0.5);
-//        GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourTexture");
-//        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-
         glUseProgram(shaderProgram);
 
+        GLfloat timeValue = (GLfloat) glfwGetTime();
+
+        GLfloat xValue = (GLfloat) (sin(timeValue) / 4) + 0.25f;
+        GLint xValueLocation = glGetUniformLocation(shaderProgram, "xValue");
+        glUniform1f(xValueLocation, xValue);
+
+        GLfloat yValue = (GLfloat) (cos(timeValue + 0.2) / 4) + 0.25f;
+        GLint yValueLocation = glGetUniformLocation(shaderProgram, "yValue");
+        glUniform1f(yValueLocation, yValue);
+
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
