@@ -17,13 +17,13 @@
 #include "texture.hpp"
 #include "quad.hpp"
 
-void errorCallback(int error, const char* description);
+void errorCallback(int error, const char *description);
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
-int main() {
+int initWindow(GLFWwindow *&window) {
     glfwSetErrorCallback(errorCallback);
 
     glfwInit();
@@ -34,7 +34,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -53,55 +53,76 @@ int main() {
 
 //    glViewport(0, 0, WIDTH * 2, HEIGHT * 2);
 
-    Shader shader("shaders/shader.vert", "shaders/shader.frag");
-
-    Texture texture("assets/container.jpg");
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::vector<GLfloat> verticesV;
-    std::vector<GLuint> indicesV;
+    return 0;
+}
 
-    std::vector<Quad> quads;
-    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
-
-    for (int index = 0; index < quads.size(); ++index) {
-        Quad quad = quads[index];
-        quad.update(verticesV);
-
-        indicesV.push_back(GLuint(4 * index + 0));
-        indicesV.push_back(GLuint(4 * index + 1));
-        indicesV.push_back(GLuint(4 * index + 2));
-
-        indicesV.push_back(GLuint(4 * index + 2));
-        indicesV.push_back(GLuint(4 * index + 3));
-        indicesV.push_back(GLuint(4 * index + 0));
-    }
-
-    GLuint VBO, VAO, EBO;
+void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfloat> &vertices,
+                   const std::vector<GLuint> &indices) {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * verticesV.size(), verticesV.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indicesV.size(), indicesV.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) 0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) (6 * sizeof(GLfloat)));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+}
+
+void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
+int main() {
+    GLFWwindow *window = nullptr;
+
+    if (initWindow(window)) {
+        return -1;
+    }
+
+    Shader shader("shaders/shader.vert", "shaders/shader.frag");
+
+    Texture texture("assets/container.jpg");
+
+    std::vector<GLfloat> vertices;
+    std::vector<GLuint> indices;
+
+    std::vector<Quad> quads;
+    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
+
+    for (int index = 0; index < quads.size(); ++index) {
+        Quad quad = quads[index];
+        quad.update(vertices);
+
+        indices.push_back(GLuint(4 * index + 0));
+        indices.push_back(GLuint(4 * index + 1));
+        indices.push_back(GLuint(4 * index + 2));
+
+        indices.push_back(GLuint(4 * index + 2));
+        indices.push_back(GLuint(4 * index + 3));
+        indices.push_back(GLuint(4 * index + 0));
+    }
+
+    GLuint VBO, VAO, EBO;
+    createBuffers(VBO, VAO, EBO, vertices, indices);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -125,25 +146,23 @@ int main() {
         glUniform1f(yValueLocation, yValue);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, (GLuint) indicesV.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, (GLuint) indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    disposeBuffers(VBO, VAO, EBO);
 
     glfwTerminate();
     return 0;
 }
 
-void errorCallback(int error, const char* description) {
+void errorCallback(int error, const char *description) {
     std::cout << "[" << error << "] " << description << std::endl;
 }
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }

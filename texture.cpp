@@ -3,7 +3,7 @@
 #include "texture.hpp"
 
 Texture::Texture(const std::string &textureName) : textureName(textureName) {
-    unsigned char* image = SOIL_load_image(textureName.c_str(), &width, &height, 0, SOIL_LOAD_RGBA);
+    unsigned char *image = SOIL_load_image(textureName.c_str(), &width, &height, 0, SOIL_LOAD_RGBA);
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);

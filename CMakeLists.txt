@@ -23,5 +23,5 @@ message("${SOIL}")
 if (APPLE)
     target_link_libraries(opengl "-framework OpenGL")
     target_link_libraries(opengl "-framework CoreFoundation")
-endif()
+endif ()
 

@@ -3,7 +3,6 @@
 Shader::Shader(const std::string &vertexShaderName, const std::string &fragmentShaderName) :
         vertexShaderName(vertexShaderName),
         fragmentShaderName(fragmentShaderName) {
-
     GLint success;
     const int logSize = 512;
     GLchar infoLog[logSize];
