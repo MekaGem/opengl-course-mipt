@@ -11,6 +11,7 @@ private:
     GLuint texture;
     int width;
     int height;
+
 public:
     const std::string textureName;
 
@@ -21,8 +22,6 @@ public:
     int getWidth();
 
     int getHeight();
-
-
 };
 
 

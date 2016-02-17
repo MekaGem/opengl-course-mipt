@@ -15,6 +15,7 @@
 
 #include "shader.hpp"
 #include "texture.hpp"
+#include "quad.hpp"
 
 void errorCallback(int error, const char* description);
 
@@ -60,32 +61,36 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GLfloat w = GLfloat(texture.getWidth()) / texture.getHeight() / 2;
-    GLfloat h = 0.5;
+    std::vector<GLfloat> verticesV;
+    std::vector<GLuint> indicesV;
 
-    GLfloat vertices[] = {
-            // Position    // Color           //Texture coordinates
-            -w, -h, 0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, // Bottom Left
-            -w,  h, 0.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f, // Top Left
-             w,  h, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f, // Top Right
-             w, -h, 0.0f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f, // Bottom Right
-    };
-    GLuint indices[] = {
-            0, 1, 2,
-            2, 3, 0
-    };
+    std::vector<Quad> quads;
+    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
+
+    for (int index = 0; index < quads.size(); ++index) {
+        Quad quad = quads[index];
+        quad.update(verticesV);
+
+        indicesV.push_back(GLuint(4 * index + 0));
+        indicesV.push_back(GLuint(4 * index + 1));
+        indicesV.push_back(GLuint(4 * index + 2));
+
+        indicesV.push_back(GLuint(4 * index + 2));
+        indicesV.push_back(GLuint(4 * index + 3));
+        indicesV.push_back(GLuint(4 * index + 0));
+    }
+
     GLuint VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-    // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * verticesV.size(), verticesV.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indicesV.size(), indicesV.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
@@ -120,7 +125,7 @@ int main() {
         glUniform1f(yValueLocation, yValue);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, (GLuint) indicesV.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);

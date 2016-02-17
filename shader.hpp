@@ -11,6 +11,7 @@
 class Shader {
 private:
     GLuint shaderProgram;
+    
 public:
     const std::string vertexShaderName;
     const std::string fragmentShaderName;

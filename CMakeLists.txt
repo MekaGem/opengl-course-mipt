@@ -3,7 +3,7 @@ project(opengl)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILES main.cpp shader.cpp shader.hpp texture.cpp texture.hpp)
+set(SOURCE_FILES main.cpp shader.cpp shader.hpp texture.cpp texture.hpp quad.cpp quad.hpp)
 add_executable(opengl ${SOURCE_FILES})
 
 find_package(PkgConfig REQUIRED)
