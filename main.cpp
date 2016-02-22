@@ -11,6 +11,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.hpp"
@@ -22,6 +23,14 @@ void errorCallback(int error, const char *description);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 const GLuint WIDTH = 800, HEIGHT = 600;
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 3.0f);
+const glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+const glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float rotation = 0;
+
+bool keys[1024];
 
 int initWindow(GLFWwindow *&window) {
     glfwSetErrorCallback(errorCallback);
@@ -91,6 +100,20 @@ void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
     glDeleteBuffers(1, &EBO);
 }
 
+void update(float delta) {
+    glm::vec3 r = glm::rotate(cameraFront, -rotation, cameraUp);
+
+    GLfloat cameraSpeed = 0.2f * delta;
+    if(keys[GLFW_KEY_W])
+        cameraPos += cameraSpeed * 4 * r;
+    if(keys[GLFW_KEY_S])
+        cameraPos -= cameraSpeed * 4 * r;
+    if(keys[GLFW_KEY_A])
+        rotation -= glm::pi<float>() * cameraSpeed;
+    if(keys[GLFW_KEY_D])
+        rotation += glm::pi<float>() * cameraSpeed;
+}
+
 int main() {
     GLFWwindow *window = nullptr;
 
@@ -100,13 +123,15 @@ int main() {
 
     Shader shader("shaders/shader.vert", "shaders/shader.frag");
 
-    Texture texture("assets/container.jpg");
+    Texture texture("assets/wall.jpg");
 
     std::vector<GLfloat> vertices;
     std::vector<GLuint> indices;
 
     std::vector<Quad> quads;
-    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
+    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
+    quads.push_back(Quad(glm::vec3(-0.5, 0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
+    quads.push_back(Quad(glm::vec3(0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
 
     for (int index = 0; index < quads.size(); ++index) {
         Quad quad = quads[index];
@@ -124,8 +149,19 @@ int main() {
     GLuint VBO, VAO, EBO;
     createBuffers(VBO, VAO, EBO, vertices, indices);
 
+    glm::mat4 projection;
+    projection = glm::perspective(45.0f, WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+
+    float time = (float) glfwGetTime();
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        float cTime = (float) glfwGetTime();
+        float delta = cTime - time;
+        time = cTime;
+
+        update(delta);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -144,6 +180,22 @@ int main() {
         GLfloat yValue = (GLfloat) (cos(timeValue + 0.2) / 4) + 0.25f;
         GLint yValueLocation = glGetUniformLocation(shader.get(), "yValue");
         glUniform1f(yValueLocation, yValue);
+
+        glm::mat4 model;
+        model = glm::rotate(model, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::translate(model, -cameraPos);
+
+        GLint modelLocation = glGetUniformLocation(shader.get(), "model");
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+        glm::mat4 view;
+        view = glm::lookAt(glm::vec3(0.0f, 0.5f, 0.0f), cameraFront, cameraUp);
+
+        GLint viewLocation = glGetUniformLocation(shader.get(), "view");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+        GLint projectionLocation = glGetUniformLocation(shader.get(), "projection");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLuint) indices.size(), GL_UNSIGNED_INT, 0);
@@ -165,5 +217,11 @@ void errorCallback(int error, const char *description) {
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+    if (action == GLFW_PRESS) {
+        keys[key] = true;
+    } else if (action == GLFW_RELEASE) {
+        keys[key] = false;
     }
 }

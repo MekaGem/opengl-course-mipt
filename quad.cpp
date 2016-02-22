@@ -19,7 +19,7 @@ Quad::Quad(const glm::vec3 &position, const glm::vec3 &left, const glm::vec3 &ri
         Quad::vertices[VERTEX_SIZE * index + 2] = v.z;
 
         Quad::vertices[VERTEX_SIZE * index + 3] = 0.0f;
-        Quad::vertices[VERTEX_SIZE * index + 4] = 0.0f;
+        Quad::vertices[VERTEX_SIZE * index + 4] = 1.0f;
         Quad::vertices[VERTEX_SIZE * index + 5] = 0.0f;
 
         Quad::vertices[VERTEX_SIZE * index + 6] = index < 2 ? 0.0f : 1.0f;

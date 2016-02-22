@@ -7,8 +7,13 @@ layout (location = 2) in vec2 textureCoordinates;
 out vec3 vertexColor;
 out vec2 vertexTextureCoordinates;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 void main() {
-    gl_Position = vec4(position.x, -position.y, position.z, 1.0);
+    vec3 pos = vec3(position.x, -position.y, position.z);
+    gl_Position = projection * view * model * vec4(pos, 1.0f);
     vertexColor = color;
     vertexTextureCoordinates = textureCoordinates;
 }
