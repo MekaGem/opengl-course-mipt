@@ -1,12 +1,14 @@
 #ifndef QUAD_HPP
 #define QUAD_HPP
 
+#include <GL/glew.h>
+#include <glm/detail/func_geometric.hpp>
 #include <glm/detail/type_vec3.hpp>
 
 
 class Quad {
 private:
-    static const int VERTEX_SIZE = (3 + 3 + 2);
+    static const int VERTEX_SIZE = (3 + 3 + 2 + 3);
     float vertices[VERTEX_SIZE * 4];
 
 public:

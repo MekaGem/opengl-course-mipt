@@ -17,6 +17,7 @@
 #include "shader.hpp"
 #include "texture.hpp"
 #include "quad.hpp"
+#include "map.hpp"
 
 void errorCallback(int error, const char *description);
 
@@ -31,6 +32,17 @@ const glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float rotation = 0;
 
 bool keys[1024];
+
+enum Direction {
+    LEFT = 0,
+    UP = 1,
+    RIGHT = 2,
+    DOWN = 3
+};
+
+int dx[] = {-1, 0, 1, 0};
+
+int dy[] = {0, 1, 0, -1};
 
 int initWindow(GLFWwindow *&window) {
     glfwSetErrorCallback(errorCallback);
@@ -82,14 +94,19 @@ void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfl
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) 0);
+    GLsizei length = (3 + 3 + 2 + 3) * sizeof(GLfloat);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, length, (GLvoid *) 0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, length, (GLvoid *) (3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *) (6 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, length, (GLvoid *) (6 * sizeof(GLfloat)));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (8 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(3);
 
     glBindVertexArray(0);
 }
@@ -103,15 +120,16 @@ void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
 void update(float delta) {
     glm::vec3 r = glm::rotate(cameraFront, -rotation, cameraUp);
 
-    GLfloat cameraSpeed = 0.2f * delta;
+    GLfloat cameraMovementSpeed = 0.4f * delta;
+    GLfloat cameraRotationSpeed = 0.4f * delta;
     if(keys[GLFW_KEY_W])
-        cameraPos += cameraSpeed * 4 * r;
+        cameraPos += cameraMovementSpeed * 4 * r;
     if(keys[GLFW_KEY_S])
-        cameraPos -= cameraSpeed * 4 * r;
+        cameraPos -= cameraMovementSpeed * 4 * r;
     if(keys[GLFW_KEY_A])
-        rotation -= glm::pi<float>() * cameraSpeed;
+        rotation -= glm::pi<float>() * cameraRotationSpeed;
     if(keys[GLFW_KEY_D])
-        rotation += glm::pi<float>() * cameraSpeed;
+        rotation += glm::pi<float>() * cameraRotationSpeed;
 }
 
 int main() {
@@ -129,9 +147,25 @@ int main() {
     std::vector<GLuint> indices;
 
     std::vector<Quad> quads;
-    quads.push_back(Quad(glm::vec3(-0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
-    quads.push_back(Quad(glm::vec3(-0.5, 0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
-    quads.push_back(Quad(glm::vec3(0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
+
+    Map map(10, 8);
+    for (int x = 0; x < map.getWidth(); ++x) {
+        for (int y = 0; y < map.getHeight(); ++y) {
+            quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
+            for (int direction = 0; direction < 4; ++direction) {
+                int cx = x + dx[direction];
+                int cy = y + dy[direction];
+                if (map.isPassable(x, y) && !map.isPassable(cx, cy)) {
+                    std::cout << x << ":" << y << " " << cx << ":" << cy << std::endl;
+                }
+            }
+        }
+    }
+
+
+//    quads.push_back(Quad(glm::vec3(-0.5, 0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
+//    quads.push_back(Quad(glm::vec3(-0.5, 0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
+//    quads.push_back(Quad(glm::vec3(0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
 
     for (int index = 0; index < quads.size(); ++index) {
         Quad quad = quads[index];
@@ -189,7 +223,8 @@ int main() {
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 
         glm::mat4 view;
-        view = glm::lookAt(glm::vec3(0.0f, 0.5f, 0.0f), cameraFront, cameraUp);
+        glm::vec3 eye(0.0f, 0.5f, 0.0f);
+        view = glm::lookAt(eye, eye + cameraFront, cameraUp);
 
         GLint viewLocation = glGetUniformLocation(shader.get(), "view");
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
