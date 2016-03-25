@@ -8,20 +8,26 @@ add_executable(opengl ${SOURCE_FILES})
 
 find_package(PkgConfig REQUIRED)
 
+set(EXECUTABLE opengl)
+
 pkg_search_module(GLFW REQUIRED glfw3)
 include_directories(${GLFW_INCLUDE_DIRS})
-target_link_libraries(opengl ${GLFW_STATIC_LIBRARIES})
+target_link_libraries(${EXECUTABLE} ${GLFW_STATIC_LIBRARIES})
 
 find_library(GLEW NAMES libGLEW.a)
-target_link_libraries(opengl ${GLEW})
+target_link_libraries(${EXECUTABLE} ${GLEW})
 message("${GLEW}")
 
 find_library(SOIL NAMES libSOIL.a)
-target_link_libraries(opengl ${SOIL})
+target_link_libraries(${EXECUTABLE} ${SOIL})
 message("${SOIL}")
 
 if (APPLE)
-    target_link_libraries(opengl "-framework OpenGL")
-    target_link_libraries(opengl "-framework CoreFoundation")
+    target_link_libraries(${EXECUTABLE} "-framework OpenGL")
+    target_link_libraries(${EXECUTABLE} "-framework CoreFoundation")
+else ()
+    find_package(OpenGL REQUIRED)
+    include_directories(${OPENGL_INCLUDE_DIRS})
+    target_link_libraries(${EXECUTABLE} ${OPENGL_LIBRARIES})
 endif ()
 
