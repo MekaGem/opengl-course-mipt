@@ -25,7 +25,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(1.5f, 0.0f, -1.5f);
 const glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 const glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -35,9 +35,23 @@ bool keys[1024];
 
 enum Direction {
     LEFT = 0,
-    UP = 1,
+    FORWARD = 1,
     RIGHT = 2,
-    DOWN = 3
+    BACKWARD = 3
+};
+
+glm::vec3 WALL_SHIFT[] = {
+        glm::vec3(0, 0, 0),
+        glm::vec3(0, 0, -1),
+        glm::vec3(1, 0, -1),
+        glm::vec3(1, 0, 0),
+};
+
+glm::vec3 WALL_DIRECTION[] = {
+        glm::vec3(0, 0, -1),
+        glm::vec3(1, 0, 0),
+        glm::vec3(0, 0, 1),
+        glm::vec3(-1, 0, 0),
 };
 
 int dx[] = {-1, 0, 1, 0};
@@ -120,7 +134,7 @@ void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
 void update(float delta) {
     glm::vec3 r = glm::rotate(cameraFront, -rotation, cameraUp);
 
-    GLfloat cameraMovementSpeed = 0.4f * delta;
+    GLfloat cameraMovementSpeed = 0.6f * delta;
     GLfloat cameraRotationSpeed = 0.4f * delta;
     if(keys[GLFW_KEY_W])
         cameraPos += cameraMovementSpeed * 4 * r;
@@ -148,24 +162,24 @@ int main() {
 
     std::vector<Quad> quads;
 
-    Map map(10, 8);
+    Map map(100, 100);
     for (int x = 0; x < map.getWidth(); ++x) {
         for (int y = 0; y < map.getHeight(); ++y) {
             quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
+            quads.push_back(Quad(glm::vec3(x, 1, -y), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0)));
             for (int direction = 0; direction < 4; ++direction) {
                 int cx = x + dx[direction];
                 int cy = y + dy[direction];
                 if (map.isPassable(x, y) && !map.isPassable(cx, cy)) {
-                    std::cout << x << ":" << y << " " << cx << ":" << cy << std::endl;
+                    quads.push_back(Quad(
+                            glm::vec3(x, 0, -y) + WALL_SHIFT[direction],
+                            glm::vec3(0, 1, 0),
+                            WALL_DIRECTION[direction]
+                    ));
                 }
             }
         }
     }
-
-
-//    quads.push_back(Quad(glm::vec3(-0.5, 0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)));
-//    quads.push_back(Quad(glm::vec3(-0.5, 0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
-//    quads.push_back(Quad(glm::vec3(0.5, -0.5, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)));
 
     for (int index = 0; index < quads.size(); ++index) {
         Quad quad = quads[index];
@@ -197,7 +211,7 @@ int main() {
 
         update(delta);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(117 / 255.0f, 187 / 255.0f, 253 / 255.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //        glActiveTexture(GL_TEXTURE0);

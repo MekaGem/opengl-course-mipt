@@ -14,7 +14,7 @@ uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-    vec3 pos = vec3(position.x, -position.y, position.z);
+    vec3 pos = vec3(position.x, position.y, position.z);
     gl_Position = projection * view * model * vec4(pos, 1.0f);
     vertexColor = color;
     vertexTextureCoordinates = textureCoordinates;

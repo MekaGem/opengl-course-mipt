@@ -2,6 +2,7 @@
 #define MAP_HPP
 
 #include <vector>
+#include <random>
 
 class Map {
 private:

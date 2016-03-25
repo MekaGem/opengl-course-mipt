@@ -2,6 +2,14 @@
 
 Map::Map(const int width, const int height) : width(width), height(height) {
     passable = std::vector<std::vector<bool>>((unsigned long) width, std::vector<bool>((unsigned long) height, true));
+
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            if (x > 2 || y > 2) {
+                passable[x][y] = rand() % 4 ;
+            }
+        }
+    }
 }
 
 bool Map::isPassable(int x, int y) {
