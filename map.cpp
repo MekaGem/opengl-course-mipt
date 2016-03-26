@@ -6,7 +6,7 @@ Map::Map(const int width, const int height) : width(width), height(height) {
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             if (x > 2 || y > 2) {
-                passable[x][y] = rand() % 4 ;
+                passable[x][y] = rand() % 6;
             }
         }
     }

@@ -165,8 +165,10 @@ int main() {
     Map map(100, 100);
     for (int x = 0; x < map.getWidth(); ++x) {
         for (int y = 0; y < map.getHeight(); ++y) {
-            quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
-            quads.push_back(Quad(glm::vec3(x, 1, -y), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0)));
+            if (map.isPassable(x, y)) {
+                quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
+                quads.push_back(Quad(glm::vec3(x, 1, -y), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0)));
+            }
             for (int direction = 0; direction < 4; ++direction) {
                 int cx = x + dx[direction];
                 int cy = y + dy[direction];
