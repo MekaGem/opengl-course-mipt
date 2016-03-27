@@ -147,15 +147,23 @@ void update(float delta) {
 }
 
 int main() {
+    std::string dataRoot;
+#ifdef DATA_ROOT
+    dataRoot = DATA_ROOT;
+#else
+    std::cerr << "No DATA_ROOT path found" << std::endl;
+    return -1;
+#endif
+
     GLFWwindow *window = nullptr;
 
     if (initWindow(window)) {
         return -1;
     }
 
-    Shader shader("shaders/shader.vert", "shaders/shader.frag");
+    Shader shader(dataRoot + "/data/shaders/shader.vert", dataRoot + "/data/shaders/shader.frag");
 
-    Texture texture("assets/wall.jpg");
+    Texture texture(dataRoot + "/data/assets/wall.jpg");
 
     std::vector<GLfloat> vertices;
     std::vector<GLuint> indices;
