@@ -33,6 +33,8 @@ float rotation = 0;
 
 bool keys[1024];
 
+bool spotlight = false;
+
 enum Direction {
     LEFT = 0,
     FORWARD = 1,
@@ -183,8 +185,8 @@ int main() {
                 if (map.isPassable(x, y) && !map.isPassable(cx, cy)) {
                     quads.push_back(Quad(
                             glm::vec3(x, 0, -y) + WALL_SHIFT[direction],
-                            glm::vec3(0, 1, 0),
-                            WALL_DIRECTION[direction]
+                            WALL_DIRECTION[direction],
+                            glm::vec3(0, 1, 0)
                     ));
                 }
             }
@@ -209,6 +211,8 @@ int main() {
 
     glm::mat4 projection;
     projection = glm::perspective(45.0f, WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+
+    glm::vec3 lamp(map.getWidth() / 2, 0.9f, -map.getHeight() / 2);
 
     float time = (float) glfwGetTime();
 
@@ -256,6 +260,13 @@ int main() {
         GLint projectionLocation = glGetUniformLocation(shader.get(), "projection");
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
+        GLint lightSourceLocation = glGetUniformLocation(shader.get(), "lightSource");
+        if (spotlight) {
+            glUniform3f(lightSourceLocation, cameraPos.x, cameraPos.y + 0.5f, cameraPos.z);
+        } else {
+            glUniform3f(lightSourceLocation, lamp.x, lamp.y, lamp.z);
+        }
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLuint) indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -276,6 +287,12 @@ void errorCallback(int error, const char *description) {
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+        return;
+    }
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        spotlight = !spotlight;
+        return;
     }
 
     if (action == GLFW_PRESS) {
