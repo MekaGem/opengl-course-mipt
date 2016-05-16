@@ -1,8 +1,9 @@
 #include <vector>
+#include <iostream>
 
 #include "quad.hpp"
 
-Quad::Quad(const glm::vec3 &position, const glm::vec3 &left, const glm::vec3 &right) {
+Quad::Quad(const glm::vec3 &position, const glm::vec3 &left, const glm::vec3 &right, float tx, float ty) {
     std::vector<glm::vec3> vertices;
     vertices.push_back(position);
     vertices.push_back(position + left);
@@ -20,14 +21,17 @@ Quad::Quad(const glm::vec3 &position, const glm::vec3 &left, const glm::vec3 &ri
         Quad::vertices[VERTEX_SIZE * index + 4] = 1.0f;
         Quad::vertices[VERTEX_SIZE * index + 5] = 0.0f;
 
-        Quad::vertices[VERTEX_SIZE * index + 6] = index < 2 ? 0.0f : 1.0f;
-        Quad::vertices[VERTEX_SIZE * index + 7] = index > 0 && index < 3 ? 1.0f : 0.0f;
+        Quad::vertices[VERTEX_SIZE * index + 6] = index < 2 ? tx : tx + 0.5f;
+        Quad::vertices[VERTEX_SIZE * index + 7] = index > 0 && index < 3 ? ty + 0.5f : ty;
 
-        glm::vec3 normal = glm::cross(left, right);
+        Quad::vertices[VERTEX_SIZE * index + 8] = index < 2 ? tx : tx + 0.5f;
+        Quad::vertices[VERTEX_SIZE * index + 9] = index > 0 && index < 3 ? ty + 0.5f : ty;
 
-        Quad::vertices[VERTEX_SIZE * index + 8] = normal.x;
-        Quad::vertices[VERTEX_SIZE * index + 9] = normal.y;
-        Quad::vertices[VERTEX_SIZE * index + 10] = normal.z;
+        glm::vec3 normal = -glm::cross(left, right);
+
+        Quad::vertices[VERTEX_SIZE * index + 10] = normal.x;
+        Quad::vertices[VERTEX_SIZE * index + 11] = normal.y;
+        Quad::vertices[VERTEX_SIZE * index + 12] = normal.z;
     }
 }
 

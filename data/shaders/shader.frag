@@ -2,10 +2,12 @@
 
 in vec3 fragmentColor;
 in vec2 fragmentTextureCoordinates;
+in vec2 fragmentNormalCoordinates;
 in vec3 fragmentNormal;
 in vec3 fragmentPosition;
 
 uniform sampler2D textureSampler;
+uniform sampler2D normalSampler;
 uniform vec3 lightSource;
 
 out vec4 color;

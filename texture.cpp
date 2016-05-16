@@ -14,7 +14,6 @@ Texture::Texture(const std::string &textureName) : textureName(textureName) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(texture);
 
     SOIL_free_image_data(image);
     glBindTexture(GL_TEXTURE_2D, 0);

@@ -7,7 +7,6 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <SOIL/SOIL.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,7 +32,7 @@ float rotation = 0;
 
 bool keys[1024];
 
-bool spotlight = false;
+bool spotlight = true;
 
 enum Direction {
     LEFT = 0,
@@ -92,6 +91,8 @@ int initWindow(GLFWwindow *&window) {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CW);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     return 0;
@@ -110,7 +111,7 @@ void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfl
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
-    GLsizei length = (3 + 3 + 2 + 3) * sizeof(GLfloat);
+    GLsizei length = (3 + 3 + 2 + 2 + 3) * sizeof(GLfloat);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, length, (GLvoid *) 0);
     glEnableVertexAttribArray(0);
@@ -121,8 +122,11 @@ void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfl
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, length, (GLvoid *) (6 * sizeof(GLfloat)));
     glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (8 * sizeof(GLfloat)));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, length, (GLvoid *) (8 * sizeof(GLfloat)));
     glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (10 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(4);
 
     glBindVertexArray(0);
 }
@@ -133,15 +137,76 @@ void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
     glDeleteBuffers(1, &EBO);
 }
 
-void update(float delta) {
+bool intersects(float a1, float a2, float b1, float b2) {
+    return a2 > b1 && a1 < b2;
+}
+
+void update(Map map, float delta) {
+    delta = std::min(delta, 1.0f / 60);
+
     glm::vec3 r = glm::rotate(cameraFront, -rotation, cameraUp);
 
-    GLfloat cameraMovementSpeed = 0.6f * delta;
+    GLfloat cameraMovementSpeed = 0.3f * delta;
     GLfloat cameraRotationSpeed = 0.4f * delta;
-    if(keys[GLFW_KEY_W])
-        cameraPos += cameraMovementSpeed * 4 * r;
-    if(keys[GLFW_KEY_S])
-        cameraPos -= cameraMovementSpeed * 4 * r;
+
+    float cx = cameraPos.x;
+    float cy = -cameraPos.z;
+
+    float padding = 0.16f;
+
+    float minX = cx - padding;
+    float minY = cy - padding;
+    float maxX = cx + padding;
+    float maxY = cy + padding;
+
+    float dx = 0;
+    float dy = 0;
+
+    r = cameraMovementSpeed * 4 * r;
+    if(keys[GLFW_KEY_W]) {
+        dx += r.x;
+        dy += -r.z;
+    }
+    if(keys[GLFW_KEY_S]) {
+        dx -= r.x;
+        dy -= -r.z;
+    }
+
+    for (int x = 0; x < map.getWidth(); ++x) {
+        for (int y = 0; y < map.getHeight(); ++y) {
+            if (!map.isPassable(x, y)) {
+                if (dx > 0) {
+                    if (intersects(minX + dx, maxX + dx, x, x + 1) && intersects(minY, maxY, y, y + 1)) {
+                        dx = std::min(dx, x - maxX);
+                    }
+                } else {
+                    if (intersects(minX + dx, maxX + dx, x, x + 1) && intersects(minY, maxY, y, y + 1)) {
+                        dx = std::max(dx, x + 1 - minX);
+                    }
+                }
+
+                if (dy > 0) {
+                    if (intersects(minY + dy, maxY + dy, y, y + 1) && intersects(minX, maxX, x, x + 1)) {
+                        dy = std::min(dy, y - maxY);
+                    }
+                } else {
+                    if (intersects(minY + dy, maxY + dy, y, y + 1) && intersects(minX, maxX, x, x + 1)) {
+                        dy = std::max(dy, y + 1 - minY);
+                    }
+                }
+            }
+        }
+    }
+
+    cameraPos.x += dx;
+    cameraPos.z -= dy;
+
+    cameraPos.x = std::max(cameraPos.x, padding);
+    cameraPos.z = std::min(cameraPos.z, -padding);
+
+    cameraPos.x = std::min(cameraPos.x, map.getWidth() - padding);
+    cameraPos.z = std::max(cameraPos.z, -map.getHeight() + padding);
+
     if(keys[GLFW_KEY_A])
         rotation -= glm::pi<float>() * cameraRotationSpeed;
     if(keys[GLFW_KEY_D])
@@ -165,19 +230,20 @@ int main() {
 
     Shader shader(dataRoot + "/data/shaders/shader.vert", dataRoot + "/data/shaders/shader.frag");
 
-    Texture texture(dataRoot + "/data/assets/wall.jpg");
+    Texture textures(dataRoot + "/data/assets/textures.png");
+    Texture normals(dataRoot + "/data/assets/normals.png");
 
     std::vector<GLfloat> vertices;
     std::vector<GLuint> indices;
 
     std::vector<Quad> quads;
 
-    Map map(100, 100);
+    Map map(10, 10);
     for (int x = 0; x < map.getWidth(); ++x) {
         for (int y = 0; y < map.getHeight(); ++y) {
             if (map.isPassable(x, y)) {
-                quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)));
-                quads.push_back(Quad(glm::vec3(x, 1, -y), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0)));
+                quads.push_back(Quad(glm::vec3(x, 0, -y), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0), 0.5f, 0.0f));
+                quads.push_back(Quad(glm::vec3(x, 1, -y), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1), 0.0f, 0.5f));
             }
             for (int direction = 0; direction < 4; ++direction) {
                 int cx = x + dx[direction];
@@ -185,8 +251,10 @@ int main() {
                 if (map.isPassable(x, y) && !map.isPassable(cx, cy)) {
                     quads.push_back(Quad(
                             glm::vec3(x, 0, -y) + WALL_SHIFT[direction],
+                            glm::vec3(0, 1, 0),
                             WALL_DIRECTION[direction],
-                            glm::vec3(0, 1, 0)
+                            0.0f,
+                            0.0f
                     ));
                 }
             }
@@ -209,9 +277,7 @@ int main() {
     GLuint VBO, VAO, EBO;
     createBuffers(VBO, VAO, EBO, vertices, indices);
 
-    glm::mat4 projection;
-    projection = glm::perspective(45.0f, WIDTH / (float) HEIGHT, 0.1f, 100.0f);
-
+    glm::mat4 projection = glm::perspective(45.0f, WIDTH / (float) HEIGHT, 0.1f, 100.0f);
     glm::vec3 lamp(map.getWidth() / 2, 0.9f, -map.getHeight() / 2);
 
     float time = (float) glfwGetTime();
@@ -223,15 +289,24 @@ int main() {
         float delta = cTime - time;
         time = cTime;
 
-        update(delta);
+        update(map, delta);
 
         glClearColor(117 / 255.0f, 187 / 255.0f, 253 / 255.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture.get());
-
         shader.use();
+
+        GLint textureLocation = glGetUniformLocation(shader.get(), "textureSampler");
+        glUniform1i(textureLocation, 0);
+
+        GLint normalLocation = glGetUniformLocation(shader.get(), "normalSampler");
+        glUniform1i(normalLocation, 1);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures.get());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normals.get());
 
         GLfloat timeValue = (GLfloat) glfwGetTime();
 
