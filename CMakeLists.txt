@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.2)
 project(299OsipovAndrey)
 
 set(EXECUTABLE 299OsipovAndrey)
@@ -17,6 +17,8 @@ if (DEPENDENCIES_ROOT)
     include(${DEPENDENCIES_ROOT}/lib64/cmake/glm/glmTargets.cmake OPTIONAL)
     include(${DEPENDENCIES_ROOT}/lib/cmake/assimp-3.2/assimpTargets.cmake)
     include(${DEPENDENCIES_ROOT}/lib/cmake/soil/soilTargets.cmake)
+
+    target_link_libraries(${EXECUTABLE} GLEW::glew_s glm glfw ASSIMP::assimp SOIL::soil)
 else ()
     set(DATA_ROOT ".")
 
@@ -45,7 +47,7 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDATA_ROOT='\"${DATA_ROOT}\"'")
+target_compile_definitions(${EXECUTABLE} PRIVATE -DDATA_ROOT="${DATA_ROOT}")
 
 install(TARGETS ${EXECUTABLE} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY data DESTINATION "${CMAKE_INSTALL_PREFIX}/${DATA_ROOT}")

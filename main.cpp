@@ -90,10 +90,8 @@ int initWindow(GLFWwindow *&window) {
 //    glViewport(0, 0, WIDTH * 2, HEIGHT * 2);
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CW);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     return 0;
 }
@@ -111,7 +109,7 @@ void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfl
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
-    GLsizei length = (3 + 3 + 2 + 2 + 3) * sizeof(GLfloat);
+    GLsizei length = (3 + 3 + 2 + 2 + 3 + 3 + 3) * sizeof(GLfloat);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, length, (GLvoid *) 0);
     glEnableVertexAttribArray(0);
@@ -127,6 +125,12 @@ void createBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, const std::vector<GLfl
 
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (10 * sizeof(GLfloat)));
     glEnableVertexAttribArray(4);
+
+    glVertexAttribPointer(5, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (13 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(5);
+
+    glVertexAttribPointer(6, 3, GL_FLOAT, GL_TRUE, length, (GLvoid *) (16 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(6);
 
     glBindVertexArray(0);
 }

@@ -32,6 +32,14 @@ Quad::Quad(const glm::vec3 &position, const glm::vec3 &left, const glm::vec3 &ri
         Quad::vertices[VERTEX_SIZE * index + 10] = normal.x;
         Quad::vertices[VERTEX_SIZE * index + 11] = normal.y;
         Quad::vertices[VERTEX_SIZE * index + 12] = normal.z;
+
+        Quad::vertices[VERTEX_SIZE * index + 13] = left.x;
+        Quad::vertices[VERTEX_SIZE * index + 14] = left.y;
+        Quad::vertices[VERTEX_SIZE * index + 15] = left.z;
+
+        Quad::vertices[VERTEX_SIZE * index + 16] = right.x;
+        Quad::vertices[VERTEX_SIZE * index + 17] = right.y;
+        Quad::vertices[VERTEX_SIZE * index + 18] = right.z;
     }
 }
 

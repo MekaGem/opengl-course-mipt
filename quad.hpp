@@ -8,7 +8,7 @@
 
 class Quad {
 private:
-    static const int VERTEX_SIZE = (3 + 3 + 2 + 2 + 3);
+    static const int VERTEX_SIZE = (3 + 3 + 2 + 2 + 3 + 3 + 3);
     float vertices[VERTEX_SIZE * 4];
 
 public:
