@@ -27,5 +27,5 @@ void main() {
     fragmentNormal = normal;
     fragmentPosition = position;
 
-    btn = mat3(bitangent, tangent, -normal);
+    btn = mat3(bitangent, -tangent, -normal);
 }
