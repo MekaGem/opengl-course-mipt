@@ -10,6 +10,8 @@ in mat3 btn;
 uniform sampler2D textureSampler;
 uniform sampler2D normalSampler;
 uniform vec3 lightSource;
+uniform vec3 lookDirection;
+uniform int spotlight;
 
 out vec4 color;
 
@@ -22,6 +24,15 @@ void main() {
 
     float diff = max(dot(normal, lightDirection), 0.0f);
     vec3 textureColor = vec3(texture(textureSampler, fragmentTextureCoordinates));
+
+    if (spotlight != 0) {
+        float diffPower = dot(lookDirection, -lightDirection);
+        if (diffPower < 0.9) {
+            diff = 0;
+        } else {
+            diff *= (diffPower - 0.9f) / 0.1f;
+        }
+    }
 
     float light = 0.2 + 0.8 * (diff);
     color = vec4(textureColor * light, 1.0f);

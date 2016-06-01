@@ -346,6 +346,13 @@ int main() {
             glUniform3f(lightSourceLocation, lamp.x, lamp.y, lamp.z);
         }
 
+        glm::vec3 lookDirection = glm::normalize(glm::rotate(cameraFront, -rotation, cameraUp));
+        GLint lookDirectionLocation = glGetUniformLocation(shader.get(), "lookDirection");
+        glUniform3f(lookDirectionLocation, lookDirection.x, lookDirection.y, lookDirection.z);
+
+        GLint spotlightLocation = glGetUniformLocation(shader.get(), "spotlight");
+        glUniform1i(spotlightLocation, spotlight);
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLuint) indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
