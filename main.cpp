@@ -141,8 +141,10 @@ void disposeBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO) {
     glDeleteBuffers(1, &EBO);
 }
 
+const float eps = 1e-06;
+
 bool intersects(float a1, float a2, float b1, float b2) {
-    return a2 > b1 && a1 < b2;
+    return a2 > b1 + eps && a1 < b2 - eps;
 }
 
 void update(Map map, float delta) {
